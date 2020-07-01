@@ -1,0 +1,43 @@
+packages:
+  my-cloud-object-storage:
+    version: 1.0
+    license: Apache-2.0
+    actions:
+      replicate-object-write:
+        version: 1.0
+        description: replicate object-write between buckets
+        docker: openwhisk/dockerskeleton
+        function: replicate-object-write.sh
+        inputs:
+          TARGET_REGION: $TARGET_REGION
+          TARGET_BUCKET: $TARGET_BUCKET
+      replicate-object-delete:
+        version: 1.0
+        description: replicate object-delete between buckets
+        docker: openwhisk/dockerskeleton
+        function: replicate-object-delete.sh
+        inputs:
+          TARGET_REGION: $TARGET_REGION
+          TARGET_BUCKET: $TARGET_BUCKET
+
+    triggers:
+      object-write:
+        feed: /whisk.system/cos/changes
+        inputs:
+          bucket: $SOURCE_BUCKET # The COS bucket must be regional and exist in the same location as the namespace
+          event_types: write # https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-pkg_obstorage#pkg_obstorage_ev_ch_ref_trig
+      object-delete:
+        feed: /whisk.system/cos/changes
+        inputs:
+          bucket: $SOURCE_BUCKET # The COS bucket must be regional and exist in the same location as the namespace
+          event_types: delete # https://cloud.ibm.com/docs/openwhisk?topic=openwhisk-pkg_obstorage#pkg_obstorage_ev_ch_ref_trig
+
+    rules:
+      replicate-object-write:
+        description: Action is triggered by object-write operation
+        action: replicate-object-write
+        trigger: object-write
+      replicate-object-delete:
+        description: Action is triggered by object-delete operation
+        action: replicate-object-delete
+        trigger: object-delete
